@@ -1,10 +1,15 @@
 # prm-gp2gp-dashboard-infra
 
+## Setup
+
+These instructions assume you are using:
+- [aws-vault](https://github.com/99designs/aws-vault) to validate your aws credentials.
+
 ## Applying terraform
 
 ### Assume admin role:
 
-`aws eval $(aws-cli-assumerole -rmfa <role-arn> <mfa-code>)`
+`aws-vault exec <profile-name>`
 
 ### Validate that you assumed the correct role:
 
