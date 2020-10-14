@@ -44,6 +44,13 @@ resource "aws_cloudfront_distribution" "dashboard_s3_distribution" {
     }
   }
 
+  tags = {
+    Name        = "GP2GP service dashboard"
+    CreatedBy   = var.repo_name
+    Environment = var.environment
+    Team        = var.team
+  }
+
   viewer_certificate {
     cloudfront_default_certificate = true
   }
