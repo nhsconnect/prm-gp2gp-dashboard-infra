@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "dashboard_website" {
-  bucket = "prm-gp2gp-dashboard-${var.environment}"
+  bucket = var.s3_dashboard_bucket_name
   acl    = "public-read"
 
   tags = {

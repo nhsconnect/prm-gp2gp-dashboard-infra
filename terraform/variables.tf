@@ -20,3 +20,7 @@ variable "region" {
   description = "AWS region."
   default     = "eu-west-2"
 }
+
+variable "s3_dashboard_bucket_name" {
+   type        = string
+}

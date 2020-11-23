@@ -18,7 +18,7 @@ pipelines:
                     command: /bin/bash
                     arguments:
                       - -c
-                      - ./tasks dojo-validate dev
+                      - NHS_ACCOUNT=common-dev ./tasks dojo-validate
       - plan_dev:
           clean_workspace: true
           jobs:
@@ -27,13 +27,13 @@ pipelines:
                 - docker
               artifacts:
                 - build:
-                    source: dev.tfplan
+                    source: common-dev.tfplan
               tasks:
                 - exec:
                     command: /bin/bash
                     arguments:
                       - -c
-                      - ./tasks dojo-plan dev
+                      - NHS_ACCOUNT=common-dev ./tasks dojo-plan
       - apply_dev:
           clean_workspace: true
           jobs:
@@ -44,13 +44,13 @@ pipelines:
                 - fetch:
                     stage: plan_dev
                     job: plan
-                    source: dev.tfplan
+                    source: common-dev.tfplan
                     is_file: yes
                 - exec:
                     command: /bin/bash
                     arguments:
                       - -c
-                      - ./tasks dojo-apply dev
+                      - NHS_ACCOUNT=common-dev ./tasks dojo-apply
       - plan_prod:
           clean_workspace: true
           jobs:
@@ -59,13 +59,13 @@ pipelines:
                 - docker
               artifacts:
                 - build:
-                    source: prod.tfplan
+                    source: common-prod.tfplan
               tasks:
                 - exec:
                     command: /bin/bash
                     arguments:
                       - -c
-                      - ./tasks dojo-plan prod
+                      - NHS_ACCOUNT=common-prod ./tasks dojo-plan
       - apply_prod:
           clean_workspace: true
           approval:
@@ -79,10 +79,10 @@ pipelines:
                 - fetch:
                     stage: plan_prod
                     job: plan
-                    source: prod.tfplan
+                    source: common-prod.tfplan
                     is_file: yes
                 - exec:
                     command: /bin/bash
                     arguments:
                       - -c
-                      - ./tasks dojo-apply prod
+                      - NHS_ACCOUNT=common-prod ./tasks dojo-apply

@@ -4,43 +4,103 @@ set -Eeo pipefail
 
 stack_name=dashboard
 tf_dir=terraform
+aws_region="eu-west-2"
+state_lock_table="prm-gp2gp-terraform-table"
 
-function tf_init {
-    directory=$1
-    stack_env=$2
-    terraform init -backend-config key=${stack_env}/${stack_name}/terraform.tfstate ${directory}
+function assume_role {
+    if [ "${NHS_ACCOUNT}" == "common-dev" ] || [ "${NHS_ACCOUNT}" == "common-prod" ]; then
+      return 0
+    elif [ "${NHS_ACCOUNT}" == "dev" ] || [ "${NHS_ACCOUNT}" == "preprod" ]; then
+      role_arn=$(aws ssm get-parameters --region ${aws_region} --names /registrations/${NHS_ACCOUNT}/user-input/cross-account-admin-role --query Parameters[0].Value --output text)
+    else
+      echo "NHS_ACCOUNT=${NHS_ACCOUNT} is not supported"
+      exit 2
+    fi
+
+    session_name="registrations-dashboard-${NHS_ACCOUNT}-session"
+
+    echo "Assuming ${NHS_ACCOUNT} role..."
+
+    sts=( $(
+        aws sts assume-role \
+        --role-arn $role_arn \
+        --role-session-name $session_name \
+        --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
+        --output text
+    ) )
+    export AWS_ACCESS_KEY_ID=${sts[0]}
+    export AWS_SECRET_ACCESS_KEY=${sts[1]}
+    export AWS_SESSION_TOKEN=${sts[2]}
 }
 
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 TASK STACK-ENVIRONMENT"
+function tf_init {
+    setup_account_variables
+    rm -rf .terraform
+
+    if [ "${NHS_ACCOUNT}" == "common-dev" ]; then
+      export s3_state_key=dev/${stack_name}/terraform.tfstate
+    elif [ "${NHS_ACCOUNT}" == "common-prod" ]; then
+      export s3_state_key=prod/${stack_name}/terraform.tfstate
+    elif [ "${NHS_ACCOUNT}" == "dev" ] || [ "${NHS_ACCOUNT}" == "preprod" ]; then
+      export s3_state_key=${stack_name}/terraform.tfstate
+    else
+      echo "NHS_ACCOUNT=${NHS_ACCOUNT} is not supported"
+      exit 2
+    fi
+
+    terraform init \
+        -backend-config key=${s3_state_key} \
+        -backend-config bucket=${state_bucket} \
+        -backend-config dynamodb_table=${state_lock_table} \
+        -backend-config region=${aws_region} \
+        ${tf_dir}
+}
+
+function setup_account_variables {
+    if [ -z "${NHS_ACCOUNT}" ]; then
+      echo "NHS_ACCOUNT environment variable is not set."
+      exit 3
+    fi
+    if [ "${NHS_ACCOUNT}" == "common-dev" ] || [ "${NHS_ACCOUNT}" == "common-prod" ]; then
+      export state_bucket="prm-gp2gp-terraform-state"
+    else
+      export state_bucket="prm-gp2gp-terraform-state-${NHS_ACCOUNT}"
+    fi
+    export TF_VAR_FILE="${tf_dir}/${NHS_ACCOUNT}.tfvars"
+}
+
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 TASK"
     exit 1
 fi
 
 task="$1"
-stack_env="$2"
 
 echo "--- ${task} ---"
 case "${task}" in
     validate)
-        tf_init ${tf_dir} ${stack_env}
+        assume_role
+        tf_init
         terraform validate ${tf_dir}
     ;;
     dojo-validate)
-        dojo "./tasks validate ${stack_env}"
+        dojo "./tasks validate"
     ;;
     plan)
-        tf_init ${tf_dir} ${stack_env}
-        terraform plan -var environment=${stack_env} -out=${stack_env}.tfplan ${tf_dir}
+        assume_role
+        tf_init
+        terraform plan -var-file="$TF_VAR_FILE" -out=${NHS_ACCOUNT}.tfplan ${tf_dir}
     ;;
     dojo-plan)
-        dojo "./tasks plan ${stack_env}"
+        dojo "./tasks plan"
     ;;
     apply)
-        tf_init ${tf_dir} ${stack_env}
-        terraform apply ${stack_env}.tfplan
+        assume_role
+        tf_init
+        terraform apply ${NHS_ACCOUNT}.tfplan
     ;;
     dojo-apply)
-        dojo "./tasks apply ${stack_env}"
+        dojo "./tasks apply"
     ;;
     *)
         echo "Invalid task: '${task}'"
