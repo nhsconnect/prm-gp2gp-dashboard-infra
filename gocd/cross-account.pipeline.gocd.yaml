@@ -1,0 +1,88 @@
+format_version: 4
+pipelines:
+  "prm-gp2gp-dashboard-infra.cross-account":
+    group: gp2gp
+    label_template: "${git[:8]}"
+    materials:
+      git:
+        type: configrepo
+    stages:
+      - validate:
+          clean_workspace: true
+          jobs:
+            test:
+              resources:
+                - docker
+              tasks:
+                - exec:
+                    command: /bin/bash
+                    arguments:
+                      - -c
+                      - NHS_ACCOUNT=dev ./tasks dojo-validate
+      - plan_dev:
+          clean_workspace: true
+          jobs:
+            plan:
+              resources:
+                - docker
+              artifacts:
+                - build:
+                    source: dev.tfplan
+              tasks:
+                - exec:
+                    command: /bin/bash
+                    arguments:
+                      - -c
+                      - NHS_ACCOUNT=dev ./tasks dojo-plan
+      - apply_dev:
+          clean_workspace: true
+          jobs:
+            apply:
+              resources:
+                - docker
+              tasks:
+                - fetch:
+                    stage: plan_dev
+                    job: plan
+                    source: dev.tfplan
+                    is_file: yes
+                - exec:
+                    command: /bin/bash
+                    arguments:
+                      - -c
+                      - NHS_ACCOUNT=dev ./tasks dojo-apply
+      - plan_prod:
+          clean_workspace: true
+          jobs:
+            plan:
+              resources:
+                - docker
+              artifacts:
+                - build:
+                    source: preprod.tfplan
+              tasks:
+                - exec:
+                    command: /bin/bash
+                    arguments:
+                      - -c
+                      - NHS_ACCOUNT=preprod ./tasks dojo-plan
+      - apply_prod:
+          clean_workspace: true
+          approval:
+            type: manual
+            allow_only_on_success: true
+          jobs:
+            apply:
+              resources:
+                - docker
+              tasks:
+                - fetch:
+                    stage: plan_prod
+                    job: plan
+                    source: preprod.tfplan
+                    is_file: yes
+                - exec:
+                    command: /bin/bash
+                    arguments:
+                      - -c
+                      - NHS_ACCOUNT=preprod ./tasks dojo-apply
