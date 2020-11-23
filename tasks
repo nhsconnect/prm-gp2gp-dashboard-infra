@@ -37,17 +37,6 @@ function tf_init {
     setup_account_variables
     rm -rf .terraform
 
-    if [ "${NHS_ACCOUNT}" == "common-dev" ]; then
-      export s3_state_key=dev/${stack_name}/terraform.tfstate
-    elif [ "${NHS_ACCOUNT}" == "common-prod" ]; then
-      export s3_state_key=prod/${stack_name}/terraform.tfstate
-    elif [ "${NHS_ACCOUNT}" == "dev" ] || [ "${NHS_ACCOUNT}" == "preprod" ]; then
-      export s3_state_key=${stack_name}/terraform.tfstate
-    else
-      echo "NHS_ACCOUNT=${NHS_ACCOUNT} is not supported"
-      exit 2
-    fi
-
     terraform init \
         -backend-config key=${s3_state_key} \
         -backend-config bucket=${state_bucket} \
@@ -61,11 +50,21 @@ function setup_account_variables {
       echo "NHS_ACCOUNT environment variable is not set."
       exit 3
     fi
-    if [ "${NHS_ACCOUNT}" == "common-dev" ] || [ "${NHS_ACCOUNT}" == "common-prod" ]; then
+
+    if [ "${NHS_ACCOUNT}" == "common-dev" ]; then
       export state_bucket="prm-gp2gp-terraform-state"
-    else
+      export s3_state_key=dev/${stack_name}/terraform.tfstate
+    elif [ "${NHS_ACCOUNT}" == "common-prod" ]; then
+      export state_bucket="prm-gp2gp-terraform-state"
+      export s3_state_key=prod/${stack_name}/terraform.tfstate
+    elif [ "${NHS_ACCOUNT}" == "dev" ] || [ "${NHS_ACCOUNT}" == "preprod" ]; then
       export state_bucket="prm-gp2gp-terraform-state-${NHS_ACCOUNT}"
+      export s3_state_key=${stack_name}/terraform.tfstate
+     else
+      echo "NHS_ACCOUNT=${NHS_ACCOUNT} is not supported"
+      exit 2
     fi
+    
     export TF_VAR_FILE="${tf_dir}/${NHS_ACCOUNT}.tfvars"
 }
 
