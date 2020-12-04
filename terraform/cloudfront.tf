@@ -2,7 +2,15 @@ locals {
   s3_origin_id = aws_s3_bucket.dashboard_website.id
 }
 
+data "aws_acm_certificate" "dashboard_certificate" {
+  provider    = aws.cf_certificate_only_region
+  domain      = var.alternate_domain_name
+  types       = ["AMAZON_ISSUED"]
+  most_recent = true
+}
+
 resource "aws_cloudfront_distribution" "dashboard_s3_distribution" {
+  aliases = [var.alternate_domain_name]
   origin {
     domain_name = aws_s3_bucket.dashboard_website.website_endpoint
     origin_id   = local.s3_origin_id
@@ -52,6 +60,9 @@ resource "aws_cloudfront_distribution" "dashboard_s3_distribution" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    acm_certificate_arn            = data.aws_acm_certificate.dashboard_certificate.arn
+    cloudfront_default_certificate = false
+    minimum_protocol_version       = "TLSv1.2_2019"
+    ssl_support_method             = "sni-only"
   }
 }

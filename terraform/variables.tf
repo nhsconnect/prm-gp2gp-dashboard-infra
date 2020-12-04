@@ -22,5 +22,10 @@ variable "region" {
 }
 
 variable "s3_dashboard_bucket_name" {
-   type        = string
+  type = string
+}
+
+variable "alternate_domain_name" {
+  type        = string
+  description = "Alternate Domain Names (CNAME) for CloudFront distribution"
 }
