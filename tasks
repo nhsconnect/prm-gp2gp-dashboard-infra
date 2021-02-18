@@ -65,7 +65,7 @@ function setup_account_variables {
       exit 2
     fi
     
-    export TF_VAR_FILE="${tf_dir}/${NHS_ACCOUNT}.tfvars"
+    export TF_VAR_FILE="${NHS_ACCOUNT}.tfvars"
 }
 
 if [ "$#" -ne 1 ]; then
