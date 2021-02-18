@@ -18,7 +18,7 @@ pipelines:
                     command: /bin/bash
                     arguments:
                       - -c
-                      - NHS_ACCOUNT=dev ./tasks dojo-validate
+                      - ./tasks dojo-validate dev
       - plan_dev:
           clean_workspace: true
           jobs:
@@ -33,7 +33,7 @@ pipelines:
                     command: /bin/bash
                     arguments:
                       - -c
-                      - NHS_ACCOUNT=dev ./tasks dojo-plan
+                      - ./tasks dojo-plan dev
       - apply_dev:
           clean_workspace: true
           jobs:
@@ -50,7 +50,7 @@ pipelines:
                     command: /bin/bash
                     arguments:
                       - -c
-                      - NHS_ACCOUNT=dev ./tasks dojo-apply
+                      - ./tasks dojo-apply dev
       - plan_prod:
           clean_workspace: true
           jobs:
@@ -65,7 +65,7 @@ pipelines:
                     command: /bin/bash
                     arguments:
                       - -c
-                      - NHS_ACCOUNT=preprod ./tasks dojo-plan
+                      - ./tasks dojo-plan preprod
       - apply_prod:
           clean_workspace: true
           approval:
@@ -85,4 +85,4 @@ pipelines:
                     command: /bin/bash
                     arguments:
                       - -c
-                      - NHS_ACCOUNT=preprod ./tasks dojo-apply
+                      - ./tasks dojo-apply preprod

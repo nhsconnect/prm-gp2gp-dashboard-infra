@@ -15,30 +15,16 @@ These instructions assume you are using:
 
 ### Invoke terraform locally:
 
-- for common account - dev environment
-
-```
-  NHS_ACCOUNT=common-dev ./tasks validate
-  NHS_ACCOUNT=common-dev ./tasks plan
-```
-
-- for common account - prod environment
-
-```
-  NHS_ACCOUNT=common-prod ./tasks validate
-  NHS_ACCOUNT=common-prod ./tasks plan
-```
-
 - for dev account
 
 ```
-  NHS_ACCOUNT=dev ./tasks validate
-  NHS_ACCOUNT=dev ./tasks plan
+  ./tasks validate dev
+  ./tasks plan dev
 ```
 
 - for preprod account
 
 ```
-  NHS_ACCOUNT=preprod ./tasks validate
-  NHS_ACCOUNT=preprod ./tasks plan
+  ./tasks validate preprod
+  ./tasks plan preprod
 ```
