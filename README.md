@@ -28,3 +28,5 @@ These instructions assume you are using:
   ./tasks validate preprod
   ./tasks plan preprod
 ```
+
+To run the formatting, run `./tasks format`
